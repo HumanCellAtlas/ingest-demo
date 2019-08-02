@@ -4,6 +4,7 @@ from unittest.mock import patch
 from broker.brokerapi import broker_api
 from broker.brokerapi.broker_api import app
 
+
 class BrokerAppTest(TestCase):
 
     def setUp(self):
@@ -27,3 +28,4 @@ class BrokerAppTest(TestCase):
 
             # then:
             self.assertEqual(500, response.status_code)
+

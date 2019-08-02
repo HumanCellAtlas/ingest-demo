@@ -207,13 +207,9 @@ def _check_token():
 
 def _save_file(submission_uuid):
     request_file = request.files['file']
-    filename = secure_filename(request_file.filename)
-
     spreadsheet_storage_service = SpreadsheetStorageService(
             SPREADSHEET_STORAGE_DIR)
-    path = spreadsheet_storage_service.store(submission_uuid,
-                                      filename,
-                                      request_file.read())
+    path = spreadsheet_storage_service.store(submission_uuid, request_file.read())
     logger.info("Saved file to: " + path)
     return path
 
