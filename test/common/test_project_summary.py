@@ -22,7 +22,7 @@ class EntityServiceTest(TestCase):
         submission_summary.file_summary.breakdown['cell_montage_file'] = {'count': 150}
         submission_summary.file_summary.count = 150
 
-        project_summary.addSubmissionSummary(submission_summary)
+        project_summary.add_submission_summary(submission_summary)
 
         assert project_summary.biomaterial_summary.count == 505
         assert len(project_summary.biomaterial_summary.breakdown.items()) == 2

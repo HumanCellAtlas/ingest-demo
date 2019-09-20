@@ -1,18 +1,17 @@
-from ingest.api.ingestapi import IngestApi
-from broker.common.submission_summary import SubmissionSummary
-from broker.common.project_summary import ProjectSummary
-from broker.common.entity_summary import EntitySummary
-from .submission_summary_cache import SubmissionSummaryCache
-from .exception.cache_miss_exception import CacheMissException
-
-
-from typing import Generator
-from typing import Iterable
-from functools import reduce
-from jsonpath_rw import jsonpath, parse
-
 import json
 import os
+from functools import reduce
+from typing import Generator
+from typing import Iterable
+
+from ingest.api.ingestapi import IngestApi
+from jsonpath_rw import parse
+
+from broker.common.entity_summary import EntitySummary
+from broker.common.project_summary import ProjectSummary
+from broker.common.submission_summary import SubmissionSummary
+from .exception.cache_miss_exception import CacheMissException
+from .submission_summary_cache import SubmissionSummaryCache
 
 
 # TODO: consider storing generators here and generating the complete summary in one pass
@@ -23,6 +22,7 @@ class SubmissionEntities:
         self.processes = processes if processes else []
         self.protocols = protocols if protocols else []
         self.files = files if files else []
+
 
 class SummaryService:
 
@@ -37,7 +37,7 @@ class SummaryService:
         submission_summaries = [self.summary_for_submission(submission) for submission in project_submissions]
 
         for summary in submission_summaries:
-            project_summary.addSubmissionSummary(summary)
+            project_summary.add_submission_summary(summary)
 
         return project_summary
 

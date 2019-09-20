@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+
 class EntitySummary:
     def __init__(self):
         self.count = 0

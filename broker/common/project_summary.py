@@ -14,7 +14,7 @@ class ProjectSummary:
         self.create_date = None
         self.last_updated_date = None
 
-    def addSubmissionSummary(self, submission_summary: 'SubmissionSummary') -> 'ProjectSummary':
+    def add_submission_summary(self, submission_summary: 'SubmissionSummary') -> 'ProjectSummary':
         """
         Adds a submission summary to this project summary
         :param submission_summary: SubmissionSummary to add to self
