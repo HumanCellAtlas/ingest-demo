@@ -13,9 +13,10 @@ class SpreadsheetUploadServiceTest(TestCase):
         self.importer = Mock('importer')
 
     @patch('broker.service.spreadsheet_upload_service.secure_filename')
-    @patch('ingest.importer.importer.XlsImporter.create_update_spreadsheet')
-    def test_upload_success(self, mock_create_update_spreadsheet, mock_secure_filename):
+    @patch('broker.service.spreadsheet_upload_service.XlsImporter')
+    def test_upload_success(self, mock_importer, mock_secure_filename):
         # given:
+        mock_importer.create_update_spreadsheet = Mock()
         spreadsheet_upload_service = SpreadsheetUploadService(self.ingest_api, self.storage_service, self.importer)
         submission_resource = {
             'uuid': {'uuid': 'submission-uuid'},
@@ -46,16 +47,17 @@ class SpreadsheetUploadServiceTest(TestCase):
 
         self.importer.import_file('path', 'url', None)
 
-        mock_create_update_spreadsheet.assert_called_with(mock_submission, mock_template_mgr, 'path')
+        mock_importer.create_update_spreadsheet.assert_called_with(mock_submission, mock_template_mgr, 'path')
 
         self.assertEqual(output.submission, mock_submission)
         self.assertEqual(output.template_manager, mock_template_mgr)
         self.assertEqual(output.path, 'path')
 
     @patch('broker.service.spreadsheet_upload_service.secure_filename')
-    @patch('ingest.importer.importer.XlsImporter.create_update_spreadsheet')
-    def test_upload_update_success(self, mock_create_update_spreadsheet, mock_secure_filename):
+    @patch('broker.service.spreadsheet_upload_service.XlsImporter')
+    def test_upload_update_success(self, mock_importer, mock_secure_filename):
         # given:
+        mock_importer.create_update_spreadsheet = Mock()
         spreadsheet_upload_service = SpreadsheetUploadService(self.ingest_api, self.storage_service, self.importer)
         submission_resource = {
             'uuid': {'uuid': 'submission-uuid'},
@@ -85,7 +87,7 @@ class SpreadsheetUploadServiceTest(TestCase):
         self.storage_service.store.assert_called_once_with('submission-uuid', 'secure-filename', 'content')
 
         self.importer.import_file('path', 'url', None)
-        mock_create_update_spreadsheet.assert_called_with(mock_submission, mock_template_mgr, 'path')
+        mock_importer.create_update_spreadsheet.assert_called_with(mock_submission, mock_template_mgr, 'path')
 
         self.assertEqual(output.submission, mock_submission)
         self.assertEqual(output.template_manager, mock_template_mgr)
