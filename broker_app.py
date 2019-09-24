@@ -4,7 +4,6 @@ import io
 import logging
 import os
 import sys
-import threading
 import traceback
 
 import jsonpickle
@@ -13,15 +12,15 @@ from flask import json
 from flask_cors import CORS, cross_origin
 from ingest.api.ingestapi import IngestApi
 from ingest.importer.importer import XlsImporter
-from ingest.importer.spreadsheetUploadError import SpreadsheetUploadError
 
 from broker.service.spreadsheet_storage.spreadsheet_storage_exceptions import SubmissionSpreadsheetDoesntExist
 from broker.service.spreadsheet_storage.spreadsheet_storage_service import SpreadsheetStorageService
-from broker.service.spreadsheet_upload_service import SpreadsheetUploadService
+from broker.service.spreadsheet_upload_service import SpreadsheetUploadService, SpreadsheetUploadError
 from broker.service.summary_service import SummaryService
 
 logging.getLogger('ingest').setLevel(logging.INFO)
-logging.getLogger('ingest.api.ingestapi').setLevel(logging.DEBUG)
+logging.getLogger('ingest.api.ingestapi').setLevel(logging.INFO)
+logging.getLogger('broker.service.spreadsheet_upload_service').setLevel(logging.INFO)
 
 format = ' %(asctime)s  - %(name)s - %(levelname)s in %(filename)s:' \
          '%(lineno)s %(funcName)s(): %(message)s'
@@ -41,11 +40,6 @@ SPREADSHEET_UPLOAD_MESSAGE = "We’ve got your spreadsheet, and we’re currentl
 Nothing else for you to do - check back later."
 
 SPREADSHEET_UPLOAD_MESSAGE_ERROR = "We experienced a problem while uploading your spreadsheet"
-
-ingest_api = IngestApi()
-storage_service = SpreadsheetStorageService(SPREADSHEET_STORAGE_DIR)
-importer = XlsImporter(ingest_api)
-spreadsheet_upload_service = SpreadsheetUploadService(ingest_api, storage_service, importer)
 
 
 @app.route('/', methods=['GET'])
@@ -69,7 +63,6 @@ def upload_spreadsheet():
 @app.route('/api_upload_update', methods=['POST'])
 @cross_origin()
 def upload_update_spreadsheet():
-    _set_token()
     return _upload_spreadsheet(is_update=True)
 
 
@@ -118,40 +111,28 @@ def submission_summary(submission_uuid):
 
 
 def _upload_spreadsheet(is_update=False):
+    ingest_api = IngestApi()
+    storage_service = SpreadsheetStorageService(SPREADSHEET_STORAGE_DIR)
+    importer = XlsImporter(ingest_api)
+    spreadsheet_upload_svc = SpreadsheetUploadService(ingest_api, storage_service, importer)
+
+    token = request.headers.get('Authorization')
+    request_file = request.files['file']
+    project_uuid = request.form.get('projectUuid')
+
     try:
-        _set_token()
         logger.info('Uploading spreadsheet!')
-        submission_resource = _async_upload(request, is_update)
-
-    except SpreadsheetUploadError as spreadsheetUploadError:
-        return _failure_response(spreadsheetUploadError.http_code,
-                                 spreadsheetUploadError.message,
-                                 spreadsheetUploadError.details)
-    except Exception as err:
+        submission_resource = spreadsheet_upload_svc.async_upload(token, request_file, is_update, project_uuid)
+        logger.info(f'Created Submission: {submission_resource["_links"]["self"]["href"]}')
+    except SpreadsheetUploadError as error:
+        return _failure_response(error.http_code,
+                                 error.message,
+                                 error.details)
+    except Exception as error:
         logger.error(traceback.format_exc())
-        return _failure_response(500, SPREADSHEET_UPLOAD_MESSAGE_ERROR, str(err))
-
+        return _failure_response(500, SPREADSHEET_UPLOAD_MESSAGE_ERROR, str(error))
     else:
         return _success_response(submission_resource)
-
-
-def _async_upload(request, is_update):
-    submission_resource = ingest_api.create_submission(update_submission=is_update)
-    logger.info(f'Created Submission: {submission_resource["_links"]["self"]["href"]}')
-
-    thread = threading.Thread(target=spreadsheet_upload_service.upload,
-                              args=(submission_resource, request.files['file'], request.form.get('projectUuid')))
-    thread.start()
-    return submission_resource
-
-
-def _set_token():
-    logger.info("Checking token")
-    token = request.headers.get('Authorization')
-    ingest_api.set_token(token)
-    if token is None:
-        raise SpreadsheetUploadError(401, "An authentication token must be supplied when uploading a spreadsheet", "")
-    return token
 
 
 def _success_response(submission_resource):

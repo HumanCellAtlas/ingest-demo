@@ -1,11 +1,8 @@
 import os
 import shutil
-
-
 from unittest import TestCase
-from broker.service.spreadsheet_storage.spreadsheet_storage_service import SpreadsheetStorageService
-from broker.service.spreadsheet_storage.spreadsheet_storage_exceptions import SubmissionSpreadsheetDoesntExist, SubmissionSpreadsheetAlreadyExists
 
+from broker.service.spreadsheet_storage.spreadsheet_storage_service import SpreadsheetStorageService
 
 TEST_STORAGE_DIR = "test_storage_dir"
 

@@ -39,7 +39,7 @@ class SpreadsheetUploadServiceTest(TestCase):
         self.importer.import_file = Mock(return_value=(mock_submission, mock_template_mgr))
 
         # when
-        output = spreadsheet_upload_service.upload(submission_resource, request_file)
+        output = spreadsheet_upload_service._upload(submission_resource, request_file)
 
         # then
         mock_secure_filename.assert_called_once_with('filename')
@@ -80,7 +80,7 @@ class SpreadsheetUploadServiceTest(TestCase):
         self.importer.import_file = Mock(return_value=(mock_submission, mock_template_mgr))
 
         # when
-        output = spreadsheet_upload_service.upload(submission_resource, request_file)
+        output = spreadsheet_upload_service._upload(submission_resource, request_file)
 
         # then
         mock_secure_filename.assert_called_once_with('filename')
